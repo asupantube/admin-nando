@@ -45,14 +45,18 @@
         .section-header-box { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; width: 100%; }
         .section-title { font-size: 16px; font-weight: 700; color: #fff; }
 
-        .grid-tim { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-bottom: 35px; width: 100%; }
+        .grid-tim { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; margin-bottom: 35px; width: 100%; }
         .card-tim { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.25); display: flex; flex-direction: column; gap: 10px; position: relative; }
         .card-tim::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: var(--accent-red); border-radius: 8px 8px 0 0; }
         
-        .card-tim-header { display: flex; justify-content: space-between; align-items: center; }
-        .card-tim-header h3 { font-size: 15px; font-weight: 700; color: #fff; }
-        .badge-pic { font-size: 11px; background: #262c36; color: var(--text-muted); padding: 2px 7px; border-radius: 4px; }
-        .btn-del-team { background: transparent; border: 1px solid #ef4444; color: #ef4444; border-radius: 4px; padding: 2px 7px; font-size: 11px; cursor: pointer; }
+        /* Gaya Baru untuk Kolom Edit Nama Tim & PIC di Header Kartu */
+        .card-tim-header { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding-bottom: 6px; border-bottom: 1px solid #262c36; }
+        .input-team-name { background: var(--bg-input); border: 1px dashed #475569; color: #fff; font-size: 14px; font-weight: 800; padding: 4px 8px; border-radius: 4px; width: 100%; outline: none; }
+        .input-team-name:focus { border-color: var(--accent-red); border-style: solid; }
+        .input-pic-name { background: #1e293b; border: 1px solid #334155; color: #cbd5e1; font-size: 11px; font-weight: 600; padding: 4px 6px; border-radius: 4px; width: 75px; text-align: center; outline: none; flex-shrink: 0; }
+        .input-pic-name:focus { border-color: var(--accent-blue); color: #fff; }
+        .btn-del-team { background: transparent; border: 1px solid #ef4444; color: #ef4444; border-radius: 4px; padding: 4px 7px; font-size: 11px; cursor: pointer; flex-shrink: 0; }
+        .btn-del-team:hover { background: rgba(239, 68, 68, 0.15); }
 
         .field-group { display: flex; flex-direction: column; gap: 4px; }
         .field-group label { font-size: 11px; font-weight: 600; color: var(--text-muted); }
@@ -60,10 +64,11 @@
         .field-input:focus { border-color: var(--accent-red); }
 
         .btn-panel-action {
-            display: block; width: 100%; padding: 8px 10px; font-size: 11px; font-weight: 700; border-radius: 5px; border: 1px solid transparent; cursor: pointer; text-align: center; margin-bottom: 5px;
+            display: block; width: 100%; padding: 8px 10px; font-size: 11px; font-weight: 700; border-radius: 5px; border: 1px solid transparent; cursor: pointer; text-align: center; margin-bottom: 5px; transition: 0.15s;
         }
         .btn-panel-action:last-child { margin-bottom: 0; }
-        .btn-panel-inject { background: #6d28d9; color: #ede9fe; border-color: #8b5cf6; } /* Tombol Suntik */
+        .btn-panel-save-card { background: #047857; color: #ecfdf5; border-color: #10b981; }
+        .btn-panel-inject { background: #6d28d9; color: #ede9fe; border-color: #8b5cf6; }
         .btn-panel-subdomain { background: #312e81; color: #c7d2fe; border-color: #4f46e5; }
         .btn-panel-histats { background: #1e3a8a; color: #93c5fd; border-color: #2563eb; }
         .btn-panel-adsterra { background: #064e3b; color: #6ee7b7; border-color: #059669; }
@@ -108,9 +113,12 @@
                 <h1>🛡️ Master Admin Control Center <span class="badge">PRO INJECTOR</span></h1>
                 <p>Monitoring Trafik Subdomain, Konversi Smartlink Adsterra & Suntik Link Otomatis.</p>
             </div>
-            <div class="sync-badge" id="syncStatus">
-                <span class="sync-dot"></span>
-                <span>Tersinkron Cloudflare KV</span>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <button class="btn-action btn-save-cloud" onclick="simpanKeCloudflare(true)">💾 Simpan Semua ke Worker</button>
+                <div class="sync-badge" id="syncStatus">
+                    <span class="sync-dot"></span>
+                    <span>Tersinkron Cloudflare KV</span>
+                </div>
             </div>
         </header>
 
@@ -141,9 +149,12 @@
         <!-- Kartu Tim & Kontrol Suntik -->
         <div class="section-header-box">
             <div class="section-title">
-                <span>⚙️ Konfigurasi Tim & Suntik Smartlink Otomatis</span>
+                <span>⚙️ Konfigurasi Tim & Suntik Smartlink Otomatis (Nama & Link Otomatis Tersimpan)</span>
             </div>
-            <button class="btn-action btn-add-team" onclick="tambahTimBaru()">➕ Tambah Tim Baru</button>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn-action btn-add-team" onclick="tambahTimBaru()">➕ Tambah Tim Baru</button>
+                <button class="btn-action btn-save-cloud" onclick="simpanKeCloudflare(true)">💾 Simpan Perubahan</button>
+            </div>
         </div>
 
         <div class="grid-tim" id="wadahKartuTim"></div>
@@ -198,11 +209,11 @@
 
         let masterData = {
             teams: [
-                { id: "A", name: "Tim A", pic: "PIC A", subdomain: "https://tima.domainanda.com", histats: "https://www.histats.com/", adsterra: "https://publisher.adsterra.com/", smartlink: "", target: "1.000 Klik" },
-                { id: "B", name: "Tim B", pic: "PIC B", subdomain: "https://timb.domainanda.com", histats: "https://www.histats.com/", adsterra: "https://publisher.adsterra.com/", smartlink: "", target: "1.000 Klik" },
-                { id: "C", name: "Tim C", pic: "PIC C", subdomain: "https://timc.domainanda.com", histats: "https://www.histats.com/", adsterra: "https://publisher.adsterra.com/", smartlink: "", target: "1.000 Klik" },
-                { id: "D", name: "Tim D", pic: "PIC D", subdomain: "https://timd.domainanda.com", histats: "https://www.histats.com/", adsterra: "https://publisher.adsterra.com/", smartlink: "", target: "1.000 Klik" },
-                { id: "E", name: "Tim E", pic: "PIC E", subdomain: "https://time.domainanda.com", histats: "https://www.histats.com/", adsterra: "https://publisher.adsterra.com/", smartlink: "", target: "1.000 Klik" }
+                { id: "A", name: "Tim Siska", pic: "PIC 1", subdomain: "https://siska.asupantube.com", histats: "https://www.histats.com/", adsterra: "https://publisher.adsterra.com/", smartlink: "", target: "1.000 Klik" },
+                { id: "B", name: "Tim Bella", pic: "PIC 2", subdomain: "https://bella.asupantube.com", histats: "https://www.histats.com/", adsterra: "https://publisher.adsterra.com/", smartlink: "", target: "1.000 Klik" },
+                { id: "C", name: "Tim Alya", pic: "PIC 3", subdomain: "https://alya.asupantube.com", histats: "https://www.histats.com/", adsterra: "https://publisher.adsterra.com/", smartlink: "", target: "1.000 Klik" },
+                { id: "D", name: "Tim Chika", pic: "PIC 4", subdomain: "https://chika.asupantube.com", histats: "https://www.histats.com/", adsterra: "https://publisher.adsterra.com/", smartlink: "", target: "1.000 Klik" },
+                { id: "E", name: "Tim Dhea", pic: "PIC 5", subdomain: "https://dhea.asupantube.com", histats: "https://www.histats.com/", adsterra: "https://publisher.adsterra.com/", smartlink: "", target: "1.000 Klik" }
             ],
             historyRekap: {}
         };
@@ -244,6 +255,8 @@
                 }
                 setSyncStatus("Tersinkron Cloudflare KV", "success");
             } catch (err) {
+                const lokal = localStorage.getItem("master_admin_data");
+                if (lokal) masterData = JSON.parse(lokal);
                 setSyncStatus("Mode Offline (Lokal)", "warning");
             }
 
@@ -254,7 +267,7 @@
         }
 
         async function simpanKeCloudflare(showAlert = false) {
-            setSyncStatus("Menyimpan...", "loading");
+            setSyncStatus("Menyimpan ke Worker...", "loading");
             localStorage.setItem("master_admin_data", JSON.stringify(masterData));
 
             try {
@@ -274,14 +287,19 @@
 
                 if (response.ok) {
                     setSyncStatus("Tersinkron Cloudflare KV", "success");
-                    if (showAlert) alert("✅ Berhasil disimpan ke Cloudflare KV!");
+                    if (showAlert) alert("✅ Semua data & link berhasil disimpan ke Cloudflare Worker!");
+                } else {
+                    setSyncStatus("Gagal Simpan", "warning");
                 }
-            } catch (err) {}
+            } catch (err) {
+                setSyncStatus("Gagal Koneksi Worker", "warning");
+            }
         }
 
         function picuAutoSave() {
+            setSyncStatus("Mengetik... (Auto-Save)", "loading");
             clearTimeout(timerAutoSave);
-            timerAutoSave = setTimeout(() => { simpanKeCloudflare(false); }, 1200);
+            timerAutoSave = setTimeout(() => { simpanKeCloudflare(false); }, 1000);
         }
 
         function setSyncStatus(text, status) {
@@ -302,28 +320,26 @@
             hitungKpiTotal();
         }
 
-        // --- FUNGSI UTAMA: SUNTIK SMARTLINK LANGSUNG DARI DASHBOARD ADMIN ---
+        // --- FUNGSI SUNTIK SMARTLINK ---
         async function suntikSmartlinkDariAdmin(idx) {
             const tim = masterData.teams[idx];
             const linkSmartlink = tim.smartlink ? tim.smartlink.trim() : "";
 
             if (!linkSmartlink) {
-                alert(`⚠️ Silakan masukkan URL Smartlink Adsterra terlebih dahulu pada kolom Tim ${tim.name}.`);
+                alert(`⚠️ Silakan masukkan URL Smartlink Adsterra terlebih dahulu pada kolom ${tim.name}.`);
                 return;
             }
 
-            if (!confirm(`Suntikkan link ini ke SEMUA video & menu di subdomain ${tim.name}?\n\nLink: ${linkSmartlink}`)) {
+            if (!confirm(`Suntikkan link ini ke SEMUA video & menu untuk ${tim.name}?\n\nLink: ${linkSmartlink}`)) {
                 return;
             }
 
-            setSyncStatus(`Menyuntikkan link ke ${tim.name}...`, "loading");
+            setSyncStatus(`Menyuntikkan link ${tim.name}...`, "loading");
 
             try {
-                // 1. Ambil data situs landing page yang ada di worker
                 let res = await fetch(_0x1a);
                 let dataSitus = await res.json();
 
-                // 2. Tanamkan smartlink ke master header dan semua video
                 if (!dataSitus.header) dataSitus.header = {};
                 dataSitus.header.link = linkSmartlink;
 
@@ -332,12 +348,11 @@
                 }
 
                 if (dataSitus.videos && Array.isArray(dataSitus.videos)) {
-                    dataSitus.videos.forEach(v => v.link = linkSmartlink); // Seluruh tombol video langsung tertanam!
+                    dataSitus.videos.forEach(v => v.link = linkSmartlink);
                 }
 
                 dataSitus.dashboardMaster = masterData;
 
-                // 3. Simpan permanen kembali ke Cloudflare KV
                 const saveRes = await fetch(_0x1a, {
                     method: "POST",
                     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${_0x2b}` },
@@ -346,7 +361,7 @@
 
                 if (saveRes.ok) {
                     setSyncStatus("Tersinkron Cloudflare KV", "success");
-                    alert(`🎉 SUKSES DISUNTIKKAN!\n\nSeluruh kolom link di website ${tim.name} sekarang sudah otomatis tertanam Smartlink ini.`);
+                    alert(`🎉 SUKSES DISUNTIKKAN!\n\nSeluruh kolom link di website sekarang sudah otomatis tertanam Smartlink ${tim.name}.`);
                 } else {
                     alert("❌ Gagal menyuntikkan ke Cloudflare Worker.");
                 }
@@ -355,7 +370,7 @@
             }
         }
 
-        // --- RENDER KARTU TIM LENGKAP DENGAN KOLOM INPUT SMARTLINK & TOMBOL SUNTIK ---
+        // --- RENDER KARTU TIM DENGAN KOLOM EDIT NAMA BEBAS ---
         function renderKartuTim() {
             const wadah = document.getElementById("wadahKartuTim");
             wadah.innerHTML = "";
@@ -364,47 +379,50 @@
                 wadah.innerHTML += `
                     <div class="card-tim">
                         <div class="card-tim-header">
-                            <h3>${team.name}</h3>
-                            <div class="card-header-actions">
-                                <span class="badge-pic">${team.pic}</span>
-                                <button class="btn-del-team" onclick="hapusTim(${idx})">🗑️ Hapus</button>
-                            </div>
+                            <input type="text" class="input-team-name" value="${team.name || ''}" 
+                                placeholder="Nama Tim..." title="Klik untuk ubah nama tim"
+                                oninput="updateTeamProperty(${idx}, 'name', this.value, 'card')">
+                            <input type="text" class="input-pic-name" value="${team.pic || ''}" 
+                                placeholder="Kode PIC" title="Klik untuk ubah PIC"
+                                oninput="updateTeamProperty(${idx}, 'pic', this.value, 'card')">
+                            <button class="btn-del-team" onclick="hapusTim(${idx})" title="Hapus Tim">🗑️</button>
                         </div>
                         
                         <div class="field-group">
                             <label>URL Subdomain Landing Page</label>
                             <input type="text" class="field-input" value="${team.subdomain || ''}" 
-                                placeholder="https://tim.domain.com"
-                                oninput="updateTeamProperty(${idx}, 'subdomain', this.value)">
+                                placeholder="https://siska.asupantube.com"
+                                oninput="updateTeamProperty(${idx}, 'subdomain', this.value, 'card')">
                         </div>
 
-                        <!-- INPUT SMARTLINK YANG AKAN DISUNTIK -->
                         <div class="field-group">
                             <label style="color: #c084fc;">💉 Smartlink Adsterra (Untuk Disuntik)</label>
                             <input type="text" class="field-input" value="${team.smartlink || ''}" 
                                 placeholder="https://profitablecpmrate.com/..."
                                 style="border-color: var(--accent-purple);"
-                                oninput="updateTeamProperty(${idx}, 'smartlink', this.value)">
+                                oninput="updateTeamProperty(${idx}, 'smartlink', this.value, 'card')">
                         </div>
 
                         <div class="field-group">
                             <label>Link Panel Histats</label>
                             <input type="text" class="field-input" value="${team.histats || ''}" 
-                                oninput="updateTeamProperty(${idx}, 'histats', this.value)">
+                                placeholder="https://www.histats.com/viewstats/?sid=..."
+                                oninput="updateTeamProperty(${idx}, 'histats', this.value, 'card')">
                         </div>
 
                         <div class="field-group">
                             <label>Link Dashboard Adsterra (Analytics)</label>
                             <input type="text" class="field-input" value="${team.adsterra || ''}" 
-                                oninput="updateTeamProperty(${idx}, 'adsterra', this.value)">
+                                placeholder="https://publisher.adsterra.com/..."
+                                oninput="updateTeamProperty(${idx}, 'adsterra', this.value, 'card')">
                         </div>
 
-                        <!-- 4 TOMBOL AKSI LENGKAP -->
                         <div style="margin-top: 6px;">
+                            <button class="btn-panel-action btn-panel-save-card" onclick="simpanKeCloudflare(true)">💾 Simpan Data Tim Ini</button>
                             <button class="btn-panel-action btn-panel-inject" onclick="suntikSmartlinkDariAdmin(${idx})">💉 Suntikkan Link ke Semua Video</button>
-                            <button class="btn-panel-action btn-panel-subdomain" onclick="bukaUrl('${team.subdomain}')">🌐 Kunjungi Web</button>
-                            <button class="btn-panel-action btn-panel-histats" onclick="bukaUrl('${team.histats}')">📊 Buka Histats</button>
-                            <button class="btn-panel-action btn-panel-adsterra" onclick="bukaUrl('${team.adsterra}')">⚡ Buka Adsterra</button>
+                            <button class="btn-panel-action btn-panel-subdomain" onclick="bukaPropertiTim(${idx}, 'subdomain')">🌐 Kunjungi Web</button>
+                            <button class="btn-panel-action btn-panel-histats" onclick="bukaPropertiTim(${idx}, 'histats')">📊 Buka Histats</button>
+                            <button class="btn-panel-action btn-panel-adsterra" onclick="bukaPropertiTim(${idx}, 'adsterra')">⚡ Buka Adsterra</button>
                         </div>
                     </div>
                 `;
@@ -425,9 +443,9 @@
 
                 wadah.innerHTML += `
                     <tr>
-                        <td><input type="text" class="table-input" value="${team.name}" style="font-weight: bold;" oninput="updateTeamProperty(${idx}, 'name', this.value)"></td>
-                        <td><input type="text" class="table-input" value="${team.subdomain || ''}" oninput="updateTeamProperty(${idx}, 'subdomain', this.value)"></td>
-                        <td><input type="text" class="table-input" value="${team.target || ''}" oninput="updateTeamProperty(${idx}, 'target', this.value)"></td>
+                        <td><input type="text" class="table-input input-row-name" value="${team.name}" style="font-weight: bold;" oninput="updateTeamProperty(${idx}, 'name', this.value, 'table')"></td>
+                        <td><input type="text" class="table-input input-row-sub" value="${team.subdomain || ''}" oninput="updateTeamProperty(${idx}, 'subdomain', this.value, 'table')"></td>
+                        <td><input type="text" class="table-input" value="${team.target || ''}" oninput="updateTeamProperty(${idx}, 'target', this.value, 'table')"></td>
                         <td><input type="number" class="table-input num" value="${views}" oninput="updateAngkaTabel(${idx}, 'views', this.value)"></td>
                         <td><input type="number" class="table-input num" value="${clicks}" style="color: var(--accent-green); font-weight: bold;" oninput="updateAngkaTabel(${idx}, 'clicks', this.value)"></td>
                         <td style="text-align: center; font-weight: bold; color: var(--accent-blue);">${ctr}%</td>
@@ -440,9 +458,33 @@
             });
         }
 
-        function updateTeamProperty(index, prop, value) {
+        // Sinkronisasi 2 arah antara Kartu Tim dan Tabel tanpa menghilangkan fokus ketikan
+        function updateTeamProperty(index, prop, value, source) {
             masterData.teams[index][prop] = value;
+            
+            if (source === 'card') {
+                const rows = document.querySelectorAll("#wadahBarisRekap tr");
+                if (rows[index]) {
+                    if (prop === 'name') rows[index].querySelector('.input-row-name').value = value;
+                    if (prop === 'subdomain') rows[index].querySelector('.input-row-sub').value = value;
+                }
+            } else if (source === 'table') {
+                const cards = document.querySelectorAll("#wadahKartuTim .card-tim");
+                if (cards[index]) {
+                    if (prop === 'name') cards[index].querySelector('.input-team-name').value = value;
+                }
+            }
             picuAutoSave();
+        }
+
+        // Membuka URL terbaru langsung dari memori (tanpa perlu refresh halaman)
+        function bukaPropertiTim(idx, prop) {
+            const url = masterData.teams[idx][prop];
+            if (url && url.trim() !== "") {
+                window.open(url.trim(), '_blank');
+            } else {
+                alert("⚠️ Link belum diisi pada kolom tersebut.");
+            }
         }
 
         function updateStatusTabel(index, value) {
@@ -490,12 +532,11 @@
 
         function tambahTimBaru() {
             const nextIndex = masterData.teams.length + 1;
-            const alphabet = String.fromCharCode(64 + nextIndex);
             masterData.teams.push({
-                id: alphabet,
-                name: `Tim ${alphabet}`,
-                pic: `PIC ${alphabet}`,
-                subdomain: `https://tim${alphabet.toLowerCase()}.domainanda.com`,
+                id: `T${nextIndex}`,
+                name: `Tim Baru ${nextIndex}`,
+                pic: `PIC ${nextIndex}`,
+                subdomain: `https://sub${nextIndex}.asupantube.com`,
                 histats: "https://www.histats.com/",
                 adsterra: "https://publisher.adsterra.com/",
                 smartlink: "",
@@ -507,15 +548,11 @@
 
         function hapusTim(index) {
             if (masterData.teams.length <= 1) return;
-            if (confirm(`Hapus Tim ${masterData.teams[index].name}?`)) {
+            if (confirm(`Hapus ${masterData.teams[index].name}?`)) {
                 masterData.teams.splice(index, 1);
                 renderSemua();
                 picuAutoSave();
             }
-        }
-
-        function bukaUrl(url) {
-            if (url && url.trim() !== "") window.open(url, '_blank');
         }
 
         function unduhExcel() {
@@ -527,7 +564,7 @@
                 return {
                     "No": i + 1,
                     "Tanggal Rekap": tanggalAktif,
-                    "Nama Tim / PIC": t.name,
+                    "Nama Tim / PIC": `${t.name} (${t.pic})`,
                     "Subdomain Kerja": t.subdomain || "-",
                     "Target Harian": t.target || "-",
                     "Total Views (Histats)": views,
