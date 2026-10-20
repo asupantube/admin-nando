@@ -49,7 +49,7 @@
         .card-tim { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.25); display: flex; flex-direction: column; gap: 10px; position: relative; }
         .card-tim::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: var(--accent-red); border-radius: 8px 8px 0 0; }
         
-        /* Gaya Baru untuk Kolom Edit Nama Tim & PIC di Header Kartu */
+        /* Gaya Kolom Edit Nama Tim & PIC di Header Kartu */
         .card-tim-header { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding-bottom: 6px; border-bottom: 1px solid #262c36; }
         .input-team-name { background: var(--bg-input); border: 1px dashed #475569; color: #fff; font-size: 14px; font-weight: 800; padding: 4px 8px; border-radius: 4px; width: 100%; outline: none; }
         .input-team-name:focus { border-color: var(--accent-red); border-style: solid; }
@@ -111,7 +111,7 @@
         <header>
             <div class="header-title">
                 <h1>🛡️ Master Admin Control Center <span class="badge">PRO INJECTOR</span></h1>
-                <p>Monitoring Trafik Subdomain, Konversi Smartlink Adsterra & Suntik Link Otomatis.</p>
+                <p>Monitoring Trafik Subdomain, Konversi Smartlink Adsterra & Suntik Link Terisolasi Per Tim.</p>
             </div>
             <div style="display: flex; align-items: center; gap: 10px;">
                 <button class="btn-action btn-save-cloud" onclick="simpanKeCloudflare(true)">💾 Simpan Semua ke Worker</button>
@@ -149,7 +149,7 @@
         <!-- Kartu Tim & Kontrol Suntik -->
         <div class="section-header-box">
             <div class="section-title">
-                <span>⚙️ Konfigurasi Tim & Suntik Smartlink Otomatis (Nama & Link Otomatis Tersimpan)</span>
+                <span>⚙️ Konfigurasi Tim & Suntik Smartlink Otomatis (Terpisah Per Subdomain)</span>
             </div>
             <div style="display: flex; gap: 8px;">
                 <button class="btn-action btn-add-team" onclick="tambahTimBaru()">➕ Tambah Tim Baru</button>
@@ -220,6 +220,12 @@
 
         let timerAutoSave = null;
 
+        // Fungsi pembantu untuk mengekstrak nama domain murni (misal: https://bella.asupantube.com/ -> bella.asupantube.com)
+        function ekstrakHostname(url) {
+            if (!url) return "";
+            return url.replace(/^https?:\/\//i, "").split("/")[0].trim().toLowerCase();
+        }
+
         function ambilMetrikHari(idx) {
             if (!masterData.historyRekap) masterData.historyRekap = {};
             if (!masterData.historyRekap[tanggalAktif]) masterData.historyRekap[tanggalAktif] = {};
@@ -252,6 +258,15 @@
                     if (data && data.dashboardMaster && data.dashboardMaster.teams) {
                         masterData = data.dashboardMaster;
                     }
+                    // Sinkronkan juga jika ada smartlink yang diinput dari halaman subdomain langsung
+                    if (data && data.smartlinksByDomain) {
+                        masterData.teams.forEach(t => {
+                            const host = ekstrakHostname(t.subdomain);
+                            if (host && data.smartlinksByDomain[host] && !t.smartlink) {
+                                t.smartlink = data.smartlinksByDomain[host];
+                            }
+                        });
+                    }
                 }
                 setSyncStatus("Tersinkron Cloudflare KV", "success");
             } catch (err) {
@@ -279,6 +294,15 @@
 
                 payload.dashboardMaster = masterData;
 
+                // Pastikan setiap smartlink tim tersimpan ke kamar subdomain masing-masing
+                if (!payload.smartlinksByDomain) payload.smartlinksByDomain = {};
+                masterData.teams.forEach(t => {
+                    const domainKey = ekstrakHostname(t.subdomain);
+                    if (domainKey && t.smartlink && t.smartlink.trim() !== "") {
+                        payload.smartlinksByDomain[domainKey] = t.smartlink.trim();
+                    }
+                });
+
                 const response = await fetch(_0x1a, {
                     method: "POST",
                     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${_0x2b}` },
@@ -287,7 +311,7 @@
 
                 if (response.ok) {
                     setSyncStatus("Tersinkron Cloudflare KV", "success");
-                    if (showAlert) alert("✅ Semua data & link berhasil disimpan ke Cloudflare Worker!");
+                    if (showAlert) alert("✅ Semua data & Smartlink masing-masing subdomain berhasil disimpan ke Cloudflare Worker!");
                 } else {
                     setSyncStatus("Gagal Simpan", "warning");
                 }
@@ -320,7 +344,7 @@
             hitungKpiTotal();
         }
 
-        // --- FUNGSI SUNTIK SMARTLINK ---
+        // --- FUNGSI SUNTIK SMARTLINK PER SUBDOMAIN (ANTI SALING TIMPA) ---
         async function suntikSmartlinkDariAdmin(idx) {
             const tim = masterData.teams[idx];
             const linkSmartlink = tim.smartlink ? tim.smartlink.trim() : "";
@@ -330,27 +354,31 @@
                 return;
             }
 
-            if (!confirm(`Suntikkan link ini ke SEMUA video & menu untuk ${tim.name}?\n\nLink: ${linkSmartlink}`)) {
+            const domainKey = ekstrakHostname(tim.subdomain);
+
+            if (!domainKey) {
+                alert(`⚠️ Kolom URL Subdomain pada ${tim.name} belum diisi dengan benar!`);
                 return;
             }
 
-            setSyncStatus(`Menyuntikkan link ${tim.name}...`, "loading");
+            if (!confirm(`Suntikkan Smartlink ini khusus ke subdomain [${domainKey}] (${tim.name})?\n\nLink: ${linkSmartlink}\n\n(Subdomain tim lain tidak akan berubah)`)) {
+                return;
+            }
+
+            setSyncStatus(`Menyuntikkan link ke ${domainKey}...`, "loading");
 
             try {
                 let res = await fetch(_0x1a);
-                let dataSitus = await res.json();
+                let dataSitus = {};
+                if (res.ok) dataSitus = await res.json();
 
-                if (!dataSitus.header) dataSitus.header = {};
-                dataSitus.header.link = linkSmartlink;
-
-                if (dataSitus.menu && Array.isArray(dataSitus.menu)) {
-                    dataSitus.menu.forEach(m => m.link = linkSmartlink);
+                // Buat objek penyimpanan per domain jika belum ada
+                if (!dataSitus.smartlinksByDomain) {
+                    dataSitus.smartlinksByDomain = {};
                 }
 
-                if (dataSitus.videos && Array.isArray(dataSitus.videos)) {
-                    dataSitus.videos.forEach(v => v.link = linkSmartlink);
-                }
-
+                // Kunci smartlink HANYA untuk subdomain tim ini
+                dataSitus.smartlinksByDomain[domainKey] = linkSmartlink;
                 dataSitus.dashboardMaster = masterData;
 
                 const saveRes = await fetch(_0x1a, {
@@ -361,7 +389,7 @@
 
                 if (saveRes.ok) {
                     setSyncStatus("Tersinkron Cloudflare KV", "success");
-                    alert(`🎉 SUKSES DISUNTIKKAN!\n\nSeluruh kolom link di website sekarang sudah otomatis tertanam Smartlink ${tim.name}.`);
+                    alert(`🎉 SUKSES DISUNTIKKAN!\n\nSubdomain [${domainKey}] sekarang menggunakan Smartlink khusus milik ${tim.name} tanpa mengubah subdomain tim lain.`);
                 } else {
                     alert("❌ Gagal menyuntikkan ke Cloudflare Worker.");
                 }
@@ -396,7 +424,7 @@
                         </div>
 
                         <div class="field-group">
-                            <label style="color: #c084fc;">💉 Smartlink Adsterra (Untuk Disuntik)</label>
+                            <label style="color: #c084fc;">💉 Smartlink Adsterra (Khusus Subdomain Ini)</label>
                             <input type="text" class="field-input" value="${team.smartlink || ''}" 
                                 placeholder="https://profitablecpmrate.com/..."
                                 style="border-color: var(--accent-purple);"
@@ -419,7 +447,7 @@
 
                         <div style="margin-top: 6px;">
                             <button class="btn-panel-action btn-panel-save-card" onclick="simpanKeCloudflare(true)">💾 Simpan Data Tim Ini</button>
-                            <button class="btn-panel-action btn-panel-inject" onclick="suntikSmartlinkDariAdmin(${idx})">💉 Suntikkan Link ke Semua Video</button>
+                            <button class="btn-panel-action btn-panel-inject" onclick="suntikSmartlinkDariAdmin(${idx})">💉 Suntikkan Link ke Subdomain Ini</button>
                             <button class="btn-panel-action btn-panel-subdomain" onclick="bukaPropertiTim(${idx}, 'subdomain')">🌐 Kunjungi Web</button>
                             <button class="btn-panel-action btn-panel-histats" onclick="bukaPropertiTim(${idx}, 'histats')">📊 Buka Histats</button>
                             <button class="btn-panel-action btn-panel-adsterra" onclick="bukaPropertiTim(${idx}, 'adsterra')">⚡ Buka Adsterra</button>
